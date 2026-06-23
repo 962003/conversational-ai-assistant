@@ -8,7 +8,7 @@ An enterprise-grade conversational assistant that automates repetitive customer
 support: order status, refunds, pricing, product info, and troubleshooting — with
 **grounded** answers (no hallucinations) and **human handoff** when it can't help.
 
-**📄 [Solution Architecture](docs/solution-architecture.md) · [Business Impact](docs/business-impact.md) · [Conversational / Journey Design](docs/customer-journey-design.md)** · [Diagrams](docs/architecture-diagram.md) · [Dialogflow CX setup](dialogflow/README.md) · [Deployment](deployment/)
+**📄 [Case Study](docs/customer-case-study.md) · [ROI Analysis](docs/roi-analysis.md) · [Solution Architecture](docs/solution-architecture.md) · [Business Impact](docs/business-impact.md) · [Conversational / Journey Design](docs/customer-journey-design.md)** · [Diagrams](docs/architecture-diagram.md) · [Deploy walkthrough](docs/deployment-walkthrough.md) · [Dialogflow CX setup](dialogflow/README.md)
 
 ---
 
@@ -27,10 +27,14 @@ competencies — not UI polish. Each links to the evidence:
 | **Dialogflow CX integration** (live `detect_intent`) | ✅ | [cx_client.py](backend/app/cx_client.py) |
 | **Cloud deployment** (Cloud Run + CI/CD) | ✅ | [deployment/](deployment/) · [.github/workflows](.github/workflows) |
 | **Business workflows** (order lookup, refund, escalation+ticket) | ✅ | [customer-journey-design.md](docs/customer-journey-design.md) |
-| **Customer use cases** (6 verticals) | ✅ | [business-impact.md](docs/business-impact.md) |
+| **Voice AI / voicebot** (speech-to-text in, text-to-speech out) | ✅ browser | [app.js](frontend/app.js) — Web Speech API; CCAI telephony = production path |
+| **Production metrics** (containment, escalation, fallback, **CSAT**, resolution time) | ✅ | [analytics.py](backend/app/analytics.py) · [dashboard](frontend/dashboard.html) |
+| **Intent accuracy** (measured vs. labeled golden set) | ✅ | [eval/intent_eval.py](backend/eval/intent_eval.py) |
+| **Customer delivery story** (requirement → design → deploy → impact) | ✅ | [case study](docs/customer-case-study.md) · [ROI](docs/roi-analysis.md) · [deploy walkthrough](docs/deployment-walkthrough.md) |
+| **Customer use cases** (7 verticals) | ✅ | [business-impact.md](docs/business-impact.md) |
 | **Contact Center AI** alignment | ✅ | [solution-architecture.md](docs/solution-architecture.md) |
-| **Production architecture** (Vertex AI, Pub/Sub, BigQuery target) | 📐 designed | [architecture-diagram.md](docs/architecture-diagram.md) |
-| **Voice AI** (CCAI telephony / STT-TTS) | 🔜 roadmap | [customer-journey-design.md](docs/customer-journey-design.md#voice--contact-center-ai) |
+| **Production architecture** (Vertex AI Vector Search, Pub/Sub, BigQuery target) | 📐 designed | [architecture-diagram.md](docs/architecture-diagram.md) |
+| **Voice via telephony** (CCAI connector) | 🔜 roadmap | [customer-journey-design.md](docs/customer-journey-design.md#voice--contact-center-ai) |
 
 Legend: ✅ implemented · 📐 designed/diagrammed · 🔜 roadmap (honestly scoped).
 
@@ -197,8 +201,15 @@ Try these in the chat (or the `/docs` Swagger UI):
 | "Tell me about Acme Voice Gateway" | `product_information` → product details |
 | "I want to talk to a human" | `human_agent` → ticket form → ticket created |
 
-The **Analytics** tab updates live: total conversations, containment rate, top
-intents, KB hits, escalations.
+The **Analytics** tab updates live: conversations, resolution & escalation rates,
+fallback rate, **CSAT** (from 👍/👎), **avg resolution time**, KB hits, top intents,
+and the **escalation queue**. Tap **🎙️** to talk to the assistant (voicebot) and
+toggle **🔊 Speak replies**.
+
+Measure intent accuracy against a labeled set:
+```bash
+cd backend && python -m eval.intent_eval     # prints accuracy + per-intent breakdown
+```
 
 ## ☁️ Deployment
 
@@ -231,18 +242,20 @@ conversational-ai-assistant/
 │   │   ├── embeddings.py   # Vertex AI / Gemini embeddings
 │   │   ├── knowledge_base.py  # vector search + TF-IDF fallback
 │   │   ├── cx_client.py    # Dialogflow CX detect_intent client
-│   │   ├── analytics.py
+│   │   ├── analytics.py    # containment, escalation, fallback, CSAT, resolution time
 │   │   ├── database.py
-│   │   └── routers/        # chat, cx, webhook, knowledge, analytics
+│   │   └── routers/        # chat (+feedback/tickets), cx, webhook, knowledge, analytics
+│   ├── eval/               # intent_eval.py — intent accuracy vs. golden set
 │   └── tests/
 ├── dialogflow/
-│   ├── provision_agent.py  # build the CX agent via the SDK
+│   ├── provision_agent.py  # build the CX agent (intents, entities, pages, slots) via SDK
 │   ├── README.md
 │   └── agent_export/       # importable intents + entities
-├── frontend/               # chat widget (Direct/CX toggle) + analytics dashboard
+├── frontend/               # chat (Direct/CX toggle, 🎙️ voicebot, 👍/👎) + dashboard
 ├── knowledge_base/         # refund_policy, pricing, shipping, products, faq (.md)
 ├── deployment/             # Cloud Run / Render / Railway
-├── docs/                   # solution-architecture, business-impact,
+├── docs/                   # case-study, roi-analysis, deployment-walkthrough,
+│                           # solution-architecture, business-impact,
 │                           # customer-journey-design, architecture-diagram, architecture
 └── screenshots/
 ```

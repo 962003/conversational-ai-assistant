@@ -29,6 +29,7 @@
           <button data-mode="direct" class="active">Direct (RAG)</button>
           <button data-mode="cx">Dialogflow CX</button>
         </div>
+        <label class="voice-toggle"><input type="checkbox" id="speak-toggle" /> 🔊 Speak replies</label>
         <span id="cx-state" class="cx-state"></span>
       </div>
       <div id="messages" class="messages"></div>
@@ -42,7 +43,8 @@
       </div>
 
       <form id="chat-form" class="composer">
-        <input id="input" type="text" placeholder="Ask about orders, refunds, pricing…" autocomplete="off" />
+        <button type="button" id="mic" class="mic" title="Speak (voicebot)" aria-label="Speak">🎙️</button>
+        <input id="input" type="text" placeholder="Ask about orders, refunds, pricing… or tap 🎙️ to talk" autocomplete="off" />
         <button type="submit">Send</button>
       </form>
     </section>

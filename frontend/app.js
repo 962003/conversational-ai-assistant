@@ -32,6 +32,62 @@ modeToggle.addEventListener("click", (e) => {
   [...modeToggle.children].forEach((b) => b.classList.toggle("active", b === e.target));
 });
 
+// ---------------------------------------------------------------------------
+// Voice AI — browser voicebot via the Web Speech API
+//   Speech-to-text (SpeechRecognition) for input, text-to-speech
+//   (speechSynthesis) for spoken replies. Production voice would use the
+//   Google CCAI telephony connector; this proves the conversation is voice-ready.
+// ---------------------------------------------------------------------------
+const micBtn = document.getElementById("mic");
+const speakToggle = document.getElementById("speak-toggle");
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognizer = null;
+let listening = false;
+
+if (!SpeechRec) {
+  micBtn.disabled = true;
+  micBtn.title = "Voice input not supported in this browser (try Chrome)";
+} else {
+  recognizer = new SpeechRec();
+  recognizer.lang = "en-US";
+  recognizer.interimResults = false;
+  recognizer.maxAlternatives = 1;
+
+  recognizer.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    inputEl.value = transcript;
+    stopListening();
+    sendMessage(transcript, { spoken: true }); // auto-speak the reply to a spoken question
+  };
+  recognizer.onerror = () => stopListening();
+  recognizer.onend = () => stopListening();
+}
+
+function startListening() {
+  if (!recognizer || listening) return;
+  listening = true;
+  micBtn.classList.add("listening");
+  micBtn.textContent = "⏺️";
+  try { recognizer.start(); } catch (_) { stopListening(); }
+}
+function stopListening() {
+  listening = false;
+  micBtn.classList.remove("listening");
+  micBtn.textContent = "🎙️";
+}
+micBtn.addEventListener("click", () => (listening ? recognizer.stop() : startListening()));
+
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  // Strip markdown so the spoken version sounds natural.
+  const clean = text.replace(/[*_`#>|]/g, "").replace(/\s+/g, " ").trim();
+  const u = new SpeechSynthesisUtterance(clean);
+  u.lang = "en-US";
+  u.rate = 1.02;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+
 function hashCode(s) {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
@@ -76,7 +132,15 @@ function renderMeta(data) {
     <div style="margin-top:8px"><b>Sources:</b><br/>${sources}</div>`;
 }
 
-async function sendMessage(text) {
+function finishBotTurn(data, label, opts) {
+  const el = addMessage(data.response, "bot", label);
+  attachFeedback(el);
+  renderMeta(data);
+  if (opts.spoken || speakToggle.checked) speak(data.response);
+  if (data.escalated) setTimeout(() => openTicketModal(), 400);
+}
+
+async function sendMessage(text, opts = {}) {
   addMessage(text, "user");
   const typing = addMessage("Assistant is thinking…", "bot");
   typing.classList.add("typing");
@@ -93,7 +157,7 @@ async function sendMessage(text) {
         // CX not wired up — fall back to the direct pipeline transparently.
         typing.remove();
         addMessage("ℹ️ " + data.message, "bot", "cx fallback");
-        return sendDirect(text);
+        return sendDirect(text, opts);
       }
       if (data.error) {
         typing.remove();
@@ -109,16 +173,14 @@ async function sendMessage(text) {
       })).json();
     }
     typing.remove();
-    addMessage(data.response, "bot", (data.via || mode) + (data.intent ? " · " + data.intent : ""));
-    renderMeta(data);
-    if (data.escalated) setTimeout(() => openTicketModal(), 400);
+    finishBotTurn(data, (data.via || mode) + (data.intent ? " · " + data.intent : ""), opts);
   } catch (e) {
     typing.remove();
     addMessage("⚠️ Could not reach the backend. Is the API running at " + API + "?", "bot");
   }
 }
 
-async function sendDirect(text) {
+async function sendDirect(text, opts = {}) {
   const typing = addMessage("Assistant is thinking…", "bot");
   typing.classList.add("typing");
   const data = await (await fetch(`${API}/chat`, {
@@ -127,9 +189,26 @@ async function sendDirect(text) {
     body: JSON.stringify({ message: text, session_id: SESSION }),
   })).json();
   typing.remove();
-  addMessage(data.response, "bot", "direct" + (data.intent ? " · " + data.intent : ""));
-  renderMeta(data);
-  if (data.escalated) setTimeout(() => openTicketModal(), 400);
+  finishBotTurn(data, "direct" + (data.intent ? " · " + data.intent : ""), opts);
+}
+
+// Thumbs up/down feedback → POST /feedback (drives the CSAT metric).
+function attachFeedback(msgEl) {
+  const bar = document.createElement("div");
+  bar.className = "feedback";
+  bar.innerHTML = `<span>Helpful?</span>
+    <button data-r="1" aria-label="Yes">👍</button>
+    <button data-r="0" aria-label="No">👎</button>`;
+  bar.addEventListener("click", async (e) => {
+    if (e.target.tagName !== "BUTTON") return;
+    await fetch(`${API}/feedback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: SESSION, rating: Number(e.target.dataset.r) }),
+    }).catch(() => {});
+    bar.innerHTML = "<span>Thanks for the feedback!</span>";
+  });
+  msgEl.appendChild(bar);
 }
 
 formEl.addEventListener("submit", (e) => {

@@ -43,6 +43,14 @@ def init_db() -> None:
                 status TEXT DEFAULT 'open',
                 created_at TEXT DEFAULT (datetime('now'))
             );
+
+            CREATE TABLE IF NOT EXISTS feedback (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id TEXT,
+                rating INTEGER,          -- 1 = thumbs up (satisfied), 0 = thumbs down
+                comment TEXT,
+                created_at TEXT DEFAULT (datetime('now'))
+            );
             """
         )
         # Migrate older databases that predate the new columns.
@@ -117,3 +125,13 @@ def list_tickets(limit: int = 50) -> list[dict]:
             (limit,),
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+def log_feedback(session_id: str, rating: int, comment: str | None = None) -> int:
+    """rating: 1 = thumbs up (satisfied), 0 = thumbs down. Drives CSAT."""
+    with get_conn() as conn:
+        cur = conn.execute(
+            "INSERT INTO feedback (session_id, rating, comment) VALUES (?, ?, ?)",
+            (session_id, 1 if rating else 0, comment),
+        )
+        return cur.lastrowid

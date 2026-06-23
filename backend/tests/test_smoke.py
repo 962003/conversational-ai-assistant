@@ -93,6 +93,18 @@ def test_analytics_aggregates(client):
     assert isinstance(a["usage_by_day"], list)
 
 
+def test_feedback_drives_csat(client):
+    client.post("/chat", json={"message": "pricing?", "session_id": "csat1"})
+    assert client.post("/feedback", json={"session_id": "csat1", "rating": 1}).status_code == 200
+    assert client.post("/feedback", json={"session_id": "csat1", "rating": 0}).status_code == 200
+    a = client.get("/analytics").json()
+    assert a["responses_rated"] >= 2
+    assert 0.0 <= a["csat"] <= 100.0
+    # Resolution-time metric is present and well-formed.
+    assert a["avg_resolution_time_seconds"] >= 0.0
+    assert isinstance(a["avg_resolution_time_display"], str)
+
+
 def test_fallback_rate_counts_unanswerable(client):
     client.post("/chat", json={"message": "zxqw nonsense gibberish?", "session_id": "tfb"})
     a = client.get("/analytics").json()

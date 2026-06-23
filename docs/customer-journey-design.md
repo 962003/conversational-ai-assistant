@@ -79,16 +79,21 @@ ask refund question → intent refund_policy → webhook → KB(refund_policy)
 ## Voice & Contact Center AI
 
 The same agent + webhook serve voice with no business-logic changes — this is the
-**Google Contact Center AI** pattern:
+**Google Contact Center AI** pattern.
 
+**Implemented now — browser voicebot.** The chat UI includes **speech-to-text**
+(mic → transcript → same pipeline) and **text-to-speech** (spoken replies) via the
+Web Speech API ([app.js](../frontend/app.js)). You can hold a spoken conversation
+with the assistant today — no telephony required.
+
+**Production path (roadmap):**
 - **CCAI telephony** connector (or a SIP gateway / the "Acme Voice Gateway" product
   in the KB) bridges phone calls to the CX agent.
 - **Speech-to-text / text-to-speech** handled by CX's audio config; barge-in and
   call-transfer map to the handoff page.
 - **Agent Assist** can surface the same KB+Gemini answers to live agents.
 
-Status: **designed / roadmap** — the conversation layer is voice-ready; the
-telephony channel is not wired in this repo.
+Status: **voicebot implemented (browser); telephony channel = roadmap.**
 
 ## Design principles
 

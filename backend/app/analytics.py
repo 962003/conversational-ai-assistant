@@ -20,6 +20,14 @@ def _pct(n: int, d: int) -> float:
     return round(100 * n / d, 1) if d else 0.0
 
 
+def _fmt_duration(seconds: float) -> str:
+    if not seconds:
+        return "—"
+    if seconds < 60:
+        return f"{round(seconds)}s"
+    return f"{int(seconds // 60)}m {int(seconds % 60)}s"
+
+
 def get_analytics() -> dict:
     settings = get_settings()
     with get_conn() as conn:
@@ -59,6 +67,22 @@ def get_analytics() -> dict:
                       is_fallback, created_at
                FROM conversations ORDER BY id DESC LIMIT 10"""
         ).fetchall()
+
+        # CSAT from thumbs up/down feedback.
+        fb = conn.execute(
+            "SELECT COUNT(*) n, SUM(rating) up FROM feedback"
+        ).fetchone()
+        ratings_count = fb["n"] or 0
+        positive = fb["up"] or 0
+
+        # Average resolution time = mean span between a session's first and last turn.
+        res = conn.execute(
+            """SELECT AVG(span) avg_span FROM (
+                 SELECT (julianday(MAX(created_at)) - julianday(MIN(created_at))) * 86400.0 AS span
+                 FROM conversations GROUP BY session_id
+               )"""
+        ).fetchone()
+        avg_resolution_seconds = round(res["avg_span"], 1) if res["avg_span"] is not None else 0.0
 
         tickets_total = conn.execute("SELECT COUNT(*) c FROM tickets").fetchone()["c"]
         open_tickets = conn.execute(
@@ -108,6 +132,11 @@ def get_analytics() -> dict:
         "knowledge_base_hits": kb_hits,
         "kb_hit_rate": _pct(kb_hits, total_turns),
         "avg_confidence": avg_conf,
+        # --- Consultant KPIs ---
+        "csat": _pct(positive, ratings_count),            # % positive feedback
+        "responses_rated": ratings_count,
+        "avg_resolution_time_seconds": avg_resolution_seconds,
+        "avg_resolution_time_display": _fmt_duration(avg_resolution_seconds),
         # --- Business outcomes ---
         "business_outcomes": {
             "contacts_deflected": deflected,

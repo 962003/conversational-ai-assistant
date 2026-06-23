@@ -37,3 +37,9 @@ class TicketRequest(BaseModel):
     name: str
     email: str
     issue: str
+
+
+class FeedbackRequest(BaseModel):
+    session_id: str = "web-session"
+    rating: int = Field(..., description="1 = thumbs up (satisfied), 0 = thumbs down")
+    comment: str | None = None

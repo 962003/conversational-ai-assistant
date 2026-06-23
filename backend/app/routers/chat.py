@@ -1,7 +1,7 @@
 """Direct chat endpoint used by the web frontend (bypasses Dialogflow for demos)."""
 from fastapi import APIRouter
 
-from ..models import ChatRequest, ChatResponse, TicketRequest
+from ..models import ChatRequest, ChatResponse, FeedbackRequest, TicketRequest
 from .. import database, service
 
 router = APIRouter(tags=["chat"])
@@ -25,6 +25,13 @@ def create_ticket(req: TicketRequest):
             f"{req.email} shortly."
         ),
     }
+
+
+@router.post("/feedback")
+def submit_feedback(req: FeedbackRequest):
+    """Thumbs up/down on an answer → drives the CSAT metric."""
+    fid = database.log_feedback(req.session_id, req.rating, req.comment)
+    return {"feedback_id": fid, "recorded": True}
 
 
 @router.get("/tickets")

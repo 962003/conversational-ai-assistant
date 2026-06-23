@@ -15,7 +15,9 @@ async function loadAnalytics() {
     ${card(d.total_conversations, "Conversations")}
     ${card(d.resolution_rate + "%", "Resolution Rate", "green")}
     ${card(d.fallback_rate + "%", "Fallback Rate", warn(d.fallback_rate))}
-    ${card(d.escalations, "Escalations")}
+    ${card(d.escalation_rate + "%", "Escalation Rate")}
+    ${card(csatDisplay(d), "CSAT", "green")}
+    ${card(d.avg_resolution_time_display || "—", "Avg Resolution Time", "blue")}
     ${card(pctOrDash(d.avg_confidence), "Avg Confidence", "blue")}
     ${card(d.kb_hit_rate + "%", "KB Hit Rate")}
   `;
@@ -67,6 +69,7 @@ function barRow(i) {
   </div>`;
 }
 function warn(v) { return v >= 30 ? "amber" : ""; }
+function csatDisplay(d) { return d.responses_rated ? d.csat + "%" : "—"; }
 function pctOrDash(v) { return v ? Math.round(v * 100) + "%" : "—"; }
 function fmt(n) { return (n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 1 }); }
 function escapeHtml(s) {
