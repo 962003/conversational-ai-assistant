@@ -56,7 +56,7 @@ sequenceDiagram
     WH->>WH: log turn → analytics
 ```
 
-## Deployment topology
+## Deployment topology (current)
 
 ```mermaid
 flowchart LR
@@ -75,3 +75,36 @@ flowchart LR
     APP --> VAI
     APP --> DB[(SQLite / Cloud SQL)]
 ```
+
+## Target production architecture (Google Cloud)
+
+The same code scales onto a full Google Cloud Contact Center AI stack. New pieces
+vs. the current build are marked **(target)**.
+
+```mermaid
+flowchart LR
+    U([Customer]) --> CH{{Channels<br/>web · voice/telephony target}}
+    CH --> DCX[Dialogflow CX]
+    DCX -->|webhook| CR[Cloud Run<br/>FastAPI fulfillment]
+    CR --> VAI[Vertex AI<br/>embeddings + Gemini]
+    CR --> VS[(Vertex AI Vector Search<br/>target)]
+    CR --> PS[[Pub/Sub<br/>async events · target]]
+    PS --> BQ[(BigQuery<br/>analytics warehouse · target)]
+    CR --> AN[(SQLite / Cloud SQL<br/>turns + tickets)]
+    AN --> BQ
+    BQ --> LK[Looker Studio<br/>dashboards · target]
+    CR -.->|tickets| CRM[(CRM / ITSM<br/>connector · target)]
+
+    classDef g fill:#4285F4,stroke:#1a73e8,color:#fff;
+    classDef t fill:#1f2330,stroke:#4285F4,color:#9ec1ff,stroke-dasharray:4 3;
+    class DCX,VAI,CR g;
+    class VS,PS,BQ,LK,CRM t;
+```
+
+- **Pub/Sub** decouples slow work (ticket creation, CRM sync, transcript export)
+  from the synchronous webhook path.
+- **BigQuery** is the analytics warehouse for conversation logs → **Looker Studio**
+  dashboards (the in-app dashboard is the lightweight version of this).
+- **Vertex AI Vector Search** replaces the in-memory cosine index for large KBs.
+- **Voice** via the CCAI telephony connector — see
+  [customer-journey-design.md](customer-journey-design.md#voice--contact-center-ai).

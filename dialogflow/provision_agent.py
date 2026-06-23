@@ -200,7 +200,7 @@ def main():
         intent_names[spec["display_name"]] = intent.name
         print(f"  ✓ intent: {spec['display_name']}")
 
-    # 5) Wire Start-Flow routes -> webhook fulfillment
+    # 5) Find the Default Start Flow
     flows_client = cx.FlowsClient(client_options=opts)
     start_flow = None
     for flow in flows_client.list_flows(parent=agent.name):
@@ -210,26 +210,94 @@ def main():
     if start_flow is None:
         raise RuntimeError("Default Start Flow not found")
 
-    def route(intent_display: str, tag: str) -> cx.TransitionRoute:
-        return cx.TransitionRoute(
-            intent=intent_names[intent_display],
-            trigger_fulfillment=cx.Fulfillment(webhook=webhook.name, tag=tag),
+    # 6) Pages with form-based slot filling (Conversational / Customer-Journey design)
+    pages_client = cx.PagesClient(client_options=opts)
+
+    def txt_fulfillment(*lines):
+        """A Fulfillment that just speaks one or more text messages."""
+        return cx.Fulfillment(
+            messages=[cx.ResponseMessage(text=cx.ResponseMessage.Text(text=list(lines)))]
         )
 
+    def fulfill(tag):
+        return cx.Fulfillment(webhook=webhook.name, tag=tag)
+
+    # 6a) Order Status — requires order_id; reprompts on no-match / no-input.
+    order_param = cx.Form.Parameter(
+        display_name="order_id",
+        required=True,
+        entity_type=et_names["order_number"],
+        fill_behavior=cx.Form.Parameter.FillBehavior(
+            initial_prompt_fulfillment=txt_fulfillment("Sure — what's your order number?"),
+            reprompt_event_handlers=[
+                cx.EventHandler(event="sys.no-match-default",
+                                trigger_fulfillment=txt_fulfillment(
+                                    "That doesn't look like an order number (4–7 digits). Please try again.")),
+                cx.EventHandler(event="sys.no-input-default",
+                                trigger_fulfillment=txt_fulfillment(
+                                    "I didn't catch that — what's your order number?")),
+            ],
+        ),
+    )
+    order_page = pages_client.create_page(parent=start_flow.name, page=cx.Page(
+        display_name="Collect Order",
+        entry_fulfillment=txt_fulfillment("Let me pull up your order."),
+        form=cx.Form(parameters=[order_param]),
+        transition_routes=[cx.TransitionRoute(
+            condition='$page.params.status = "FINAL"', trigger_fulfillment=fulfill("kb_search"))],
+    ))
+    print("  ✓ page: Collect Order (slot filling: order_id)")
+
+    # 6b) Human Handoff — collects name, email, issue, then opens a ticket.
+    def form_param(name, entity_type, prompt):
+        return cx.Form.Parameter(
+            display_name=name, required=True, entity_type=entity_type,
+            fill_behavior=cx.Form.Parameter.FillBehavior(
+                initial_prompt_fulfillment=txt_fulfillment(prompt)),
+        )
+
+    handoff_page = pages_client.create_page(parent=start_flow.name, page=cx.Page(
+        display_name="Human Handoff",
+        entry_fulfillment=txt_fulfillment("No problem — I'll connect you with an agent. A few quick details:"),
+        form=cx.Form(parameters=[
+            form_param("person_name", "projects/-/locations/-/agents/-/entityTypes/sys.person",
+                       "What's your name?"),
+            form_param("email", et_names["email"], "What's the best email to reach you?"),
+            form_param("issue", "projects/-/locations/-/agents/-/entityTypes/sys.any",
+                       "Briefly, what's the issue?"),
+        ]),
+        transition_routes=[cx.TransitionRoute(
+            condition='$page.params.status = "FINAL"', trigger_fulfillment=fulfill("create_ticket"))],
+    ))
+    print("  ✓ page: Human Handoff (slot filling: name, email, issue)")
+
+    # 7) Start-Flow routes + a no-match fallback (Routes & Fallbacks)
+    def route_to_page(intent_display, page_name):
+        return cx.TransitionRoute(intent=intent_names[intent_display], target_page=page_name)
+
+    def route_to_webhook(intent_display, tag):
+        return cx.TransitionRoute(intent=intent_names[intent_display], trigger_fulfillment=fulfill(tag))
+
     routes = [
-        route("order_status", "kb_search"),
-        route("refund_policy", "kb_search"),
-        route("pricing", "kb_search"),
-        route("product_information", "kb_search"),
-        route("general_question", "kb_search"),
-        route("human_agent", "create_ticket"),
+        route_to_page("order_status", order_page.name),     # → slot-filling journey
+        route_to_page("human_agent", handoff_page.name),    # → handoff journey
+        route_to_webhook("refund_policy", "kb_search"),
+        route_to_webhook("pricing", "kb_search"),
+        route_to_webhook("product_information", "kb_search"),
+        route_to_webhook("general_question", "kb_search"),
     ]
     start_flow.transition_routes = list(start_flow.transition_routes) + routes
+
+    # Fallback: unmatched input still gets a grounded KB attempt instead of a dead end.
+    handlers = [h for h in start_flow.event_handlers if h.event != "sys.no-match-default"]
+    handlers.append(cx.EventHandler(event="sys.no-match-default", trigger_fulfillment=fulfill("kb_search")))
+    start_flow.event_handlers = handlers
+
     flows_client.update_flow(
         flow=start_flow,
-        update_mask={"paths": ["transition_routes"]},
+        update_mask={"paths": ["transition_routes", "event_handlers"]},
     )
-    print(f"✓ Wired {len(routes)} Start-Flow routes to the webhook")
+    print(f"✓ Wired {len(routes)} routes + no-match fallback on the Start Flow")
 
     agent_id = agent.name.split("/")[-1]
     print("\nDone. Add this to backend/.env:")

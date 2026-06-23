@@ -8,9 +8,31 @@ An enterprise-grade conversational assistant that automates repetitive customer
 support: order status, refunds, pricing, product info, and troubleshooting — with
 **grounded** answers (no hallucinations) and **human handoff** when it can't help.
 
-**📄 [Solution Architecture](docs/solution-architecture.md) · [Business Impact](docs/business-impact.md)** · [Technical architecture](docs/architecture.md) · [Dialogflow CX setup](dialogflow/README.md) · [Deployment](deployment/) · [Live demo flow](#-demo)
+**📄 [Solution Architecture](docs/solution-architecture.md) · [Business Impact](docs/business-impact.md) · [Conversational / Journey Design](docs/customer-journey-design.md)** · [Diagrams](docs/architecture-diagram.md) · [Dialogflow CX setup](dialogflow/README.md) · [Deployment](deployment/)
 
 ---
+
+## 🎯 What this demonstrates
+
+This repo is a **Conversational AI solution**, evaluated on conversational/Cloud
+competencies — not UI polish. Each links to the evidence:
+
+| Competency | Status | Where |
+|------------|--------|-------|
+| **Conversational design** (flows, pages, routes, fallbacks) | ✅ | [provision_agent.py](dialogflow/provision_agent.py) · [customer-journey-design.md](docs/customer-journey-design.md) |
+| **Intent modeling** (6 intents, training phrases) | ✅ | [intents.json](dialogflow/agent_export/intents.json) |
+| **Entity extraction** (regex + map entities, annotated) | ✅ | [entities.json](dialogflow/agent_export/entities.json) · provision_agent.py |
+| **Slot filling** (required params, reprompts, no-input) | ✅ | [customer-journey-design.md](docs/customer-journey-design.md) |
+| **Webhook architecture** (CX `WebhookRequest/Response`) | ✅ | [webhook.py](backend/app/routers/webhook.py) |
+| **Dialogflow CX integration** (live `detect_intent`) | ✅ | [cx_client.py](backend/app/cx_client.py) |
+| **Cloud deployment** (Cloud Run + CI/CD) | ✅ | [deployment/](deployment/) · [.github/workflows](.github/workflows) |
+| **Business workflows** (order lookup, refund, escalation+ticket) | ✅ | [customer-journey-design.md](docs/customer-journey-design.md) |
+| **Customer use cases** (6 verticals) | ✅ | [business-impact.md](docs/business-impact.md) |
+| **Contact Center AI** alignment | ✅ | [solution-architecture.md](docs/solution-architecture.md) |
+| **Production architecture** (Vertex AI, Pub/Sub, BigQuery target) | 📐 designed | [architecture-diagram.md](docs/architecture-diagram.md) |
+| **Voice AI** (CCAI telephony / STT-TTS) | 🔜 roadmap | [customer-journey-design.md](docs/customer-journey-design.md#voice--contact-center-ai) |
+
+Legend: ✅ implemented · 📐 designed/diagrammed · 🔜 roadmap (honestly scoped).
 
 ## 🎯 Problem
 
@@ -220,7 +242,8 @@ conversational-ai-assistant/
 ├── frontend/               # chat widget (Direct/CX toggle) + analytics dashboard
 ├── knowledge_base/         # refund_policy, pricing, shipping, products, faq (.md)
 ├── deployment/             # Cloud Run / Render / Railway
-├── docs/                   # solution-architecture, business-impact, architecture
+├── docs/                   # solution-architecture, business-impact,
+│                           # customer-journey-design, architecture-diagram, architecture
 └── screenshots/
 ```
 

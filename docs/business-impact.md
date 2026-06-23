@@ -62,12 +62,43 @@ Embeddings → Gemini pipeline.
   citations** so guidance is traceable — and explicit handoff for anything that
   needs a lawyer.
 
-### 4. Enterprise Knowledge Search
+### 4. Banking / Financial Services Assistant
+- **Audience:** retail banking customers.
+- **Knowledge base:** account & card policies, fees, loan/EMI rules, branch/ATM
+  info, dispute process.
+- **Intents:** balance/transaction question, card block, fees & charges, loan
+  eligibility, report fraud → **escalate to a banker**.
+- **Value:** 24/7 self-service for high-volume queries; strict **grounding** (no
+  invented rates/fees) and instant handoff for anything sensitive (fraud, disputes).
+
+### 5. IT Service Desk
+- **Audience:** employees.
+- **Knowledge base:** how-to guides, access/VPN, software catalog, known issues,
+  SLAs.
+- **Intents:** password reset, access request, troubleshoot issue, software
+  request, **raise a ticket** to L2.
+- **Value:** deflects L1 tickets, faster resolution, consistent runbook answers;
+  unresolved cases escalate with full context into the ticket queue.
+
+### 6. Appointment Booking
+- **Audience:** customers / patients.
+- **Knowledge base:** services, hours, locations, prep instructions, cancellation
+  policy.
+- **Intents:** check availability, book/reschedule/cancel (slot filling: service,
+  date, time, contact), pre-visit questions.
+- **Value:** showcases **multi-slot form filling** end-to-end; reduces phone volume
+  and no-shows with 24/7 booking and reminders.
+
+### 7. Enterprise Knowledge Search
 - **Audience:** all employees.
 - **Knowledge base:** wikis, runbooks, product docs, SOPs across teams.
 - **Intents:** how-do-I, where-is, who-owns, definition/lookup.
 - **Value:** one natural-language entry point across siloed systems; cuts time
   spent hunting for information; surfaces the **source** for every answer.
+
+> These are deliberately **real enterprise workflows** (support, banking, IT,
+> scheduling) — not toy bots (weather/movie/FAQ). The harder, higher-value the
+> workflow, the more the grounding + slot filling + escalation design matters.
 
 ## Why it generalizes
 

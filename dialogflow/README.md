@@ -98,15 +98,17 @@ shipping info.
 
 ## Conversational design (intent roles)
 
-The agent is a full conversation, not just Q&A. The intents map to standard
-conversational roles:
+The agent is a full conversation, not just Q&A — with **pages**, **slot filling**,
+**routes**, and **fallbacks** all provisioned by `provision_agent.py`. Full design
+in [docs/customer-journey-design.md](../docs/customer-journey-design.md).
 
 | Role | Implemented by | Fulfillment |
 |------|----------------|-------------|
 | **Greeting** | `Default Welcome Intent` (built-in) | static welcome |
-| **Ask a question / Search KB** | `general_question` + the 4 topic intents | webhook tag `kb_search` → KB + Gemini |
-| **Escalate to human** | `human_agent` | webhook tag `create_ticket` → ticket |
-| **Fallback** | Start Page **no-match** event handler (built-in) | reprompt / offer human |
+| **Order status** | `order_status` → **Collect Order** page (slot-fills `order_id`, reprompts) | webhook tag `kb_search` |
+| **Ask a question / Search KB** | `general_question` + topic intents | webhook tag `kb_search` → KB + Gemini |
+| **Escalate to human** | `human_agent` → **Human Handoff** page (slot-fills name/email/issue) | webhook tag `create_ticket` → ticket |
+| **Fallback** | Start Flow **no-match** event handler | routes to webhook `kb_search` (grounded attempt) |
 
 ## Driving CX from the backend (the full path)
 
