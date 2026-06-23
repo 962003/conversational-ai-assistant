@@ -53,6 +53,11 @@ class Settings(BaseSettings):
     # Confidence below this is treated as "low" (suggest human handoff).
     confidence_threshold: float = 0.35
 
+    # --- Business-outcome assumptions (for the analytics dashboard) ---
+    # Fully-loaded cost and handling time of one human-handled support contact.
+    cost_per_human_contact_usd: float = 6.0
+    minutes_per_human_contact: float = 6.0
+
     # Webhook security (optional shared secret header from Dialogflow CX)
     webhook_secret: str = ""
 

@@ -29,6 +29,8 @@ def init_db() -> None:
                 source TEXT,
                 escalated INTEGER DEFAULT 0,
                 sentiment TEXT,
+                confidence REAL DEFAULT 0,
+                is_fallback INTEGER DEFAULT 0,
                 created_at TEXT DEFAULT (datetime('now'))
             );
 
@@ -43,6 +45,12 @@ def init_db() -> None:
             );
             """
         )
+        # Migrate older databases that predate the new columns.
+        cols = {r["name"] for r in conn.execute("PRAGMA table_info(conversations)")}
+        if "confidence" not in cols:
+            conn.execute("ALTER TABLE conversations ADD COLUMN confidence REAL DEFAULT 0")
+        if "is_fallback" not in cols:
+            conn.execute("ALTER TABLE conversations ADD COLUMN is_fallback INTEGER DEFAULT 0")
 
 
 @contextmanager
@@ -68,12 +76,15 @@ def log_turn(
     source: str | None,
     escalated: bool = False,
     sentiment: str | None = None,
+    confidence: float = 0.0,
+    is_fallback: bool = False,
 ) -> None:
     with get_conn() as conn:
         conn.execute(
             """INSERT INTO conversations
-               (session_id, user_message, bot_response, intent, kb_hit, source, escalated, sentiment)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+               (session_id, user_message, bot_response, intent, kb_hit, source,
+                escalated, sentiment, confidence, is_fallback)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 session_id,
                 user_message,
@@ -83,6 +94,8 @@ def log_turn(
                 source,
                 1 if escalated else 0,
                 sentiment,
+                float(confidence or 0.0),
+                1 if is_fallback else 0,
             ),
         )
 
@@ -94,3 +107,13 @@ def create_ticket(session_id: str, name: str, email: str, issue: str) -> int:
             (session_id, name, email, issue),
         )
         return cur.lastrowid
+
+
+def list_tickets(limit: int = 50) -> list[dict]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            """SELECT id, session_id, name, email, issue, status, created_at
+               FROM tickets ORDER BY id DESC LIMIT ?""",
+            (limit,),
+        ).fetchall()
+    return [dict(r) for r in rows]

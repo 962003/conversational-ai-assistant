@@ -82,4 +82,36 @@ def test_analytics_aggregates(client):
     client.post("/chat", json={"message": "pricing?", "session_id": "t3"})
     r = client.get("/analytics")
     assert r.status_code == 200
-    assert r.json()["total_turns"] >= 1
+    a = r.json()
+    assert a["total_turns"] >= 1
+    # Consultant metrics present and well-formed.
+    for key in ("resolution_rate", "fallback_rate", "escalation_rate", "kb_hit_rate"):
+        assert 0.0 <= a[key] <= 100.0
+    assert 0.0 <= a["avg_confidence"] <= 1.0
+    bo = a["business_outcomes"]
+    assert {"contacts_deflected", "estimated_cost_saved_usd", "estimated_hours_saved"} <= bo.keys()
+    assert isinstance(a["usage_by_day"], list)
+
+
+def test_fallback_rate_counts_unanswerable(client):
+    client.post("/chat", json={"message": "zxqw nonsense gibberish?", "session_id": "tfb"})
+    a = client.get("/analytics").json()
+    assert a["fallback_rate"] > 0.0  # the gibberish turn is a fallback
+
+
+def test_escalation_queue_lists_tickets(client):
+    # Escalate, then create a ticket → it should appear in the queue.
+    client.post("/chat", json={"message": "I want a human", "session_id": "tq"})
+    tr = client.post("/ticket", json={
+        "session_id": "tq", "name": "Asha", "email": "asha@example.com",
+        "issue": "Refund not received",
+    })
+    assert tr.status_code == 200
+
+    q = client.get("/tickets").json()
+    assert q["total"] >= 1 and q["open"] >= 1
+    assert any(t["email"] == "asha@example.com" for t in q["tickets"])
+
+    a = client.get("/analytics").json()
+    assert a["open_tickets"] >= 1
+    assert any(t["name"] == "Asha" for t in a["escalation_queue"])

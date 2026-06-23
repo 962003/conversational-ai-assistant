@@ -25,3 +25,14 @@ def create_ticket(req: TicketRequest):
             f"{req.email} shortly."
         ),
     }
+
+
+@router.get("/tickets")
+def list_tickets(limit: int = 50):
+    """The human-handoff (Bot → Agent) queue."""
+    tickets = database.list_tickets(limit)
+    return {
+        "total": len(tickets),
+        "open": sum(1 for t in tickets if t["status"] == "open"),
+        "tickets": tickets,
+    }

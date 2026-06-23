@@ -23,16 +23,28 @@
 
   <main class="dash">
     <button class="refresh" onclick="loadAnalytics()">↻ Refresh</button>
+
+    <h2 class="section-title">Usage &amp; Resolution</h2>
     <div class="cards" id="cards"></div>
+
+    <h2 class="section-title">Business Outcomes <span class="muted-note">(deflected human contacts)</span></h2>
+    <div class="cards outcomes" id="outcomes"></div>
+    <p class="assumptions" id="assumptions"></p>
+
     <div class="grid2">
       <div class="block">
         <h3>Top Questions / Intents</h3>
         <div id="intents"></div>
       </div>
       <div class="block">
-        <h3>Recent Conversations</h3>
-        <div class="recent" id="recent"></div>
+        <h3>Escalation Queue <span class="muted-note">Bot → Agent</span></h3>
+        <div class="recent" id="queue"></div>
       </div>
+    </div>
+
+    <div class="block" style="margin-top:18px">
+      <h3>Recent Conversations</h3>
+      <div class="recent" id="recent"></div>
     </div>
   </main>
 

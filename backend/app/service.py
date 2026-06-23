@@ -63,7 +63,7 @@ def handle_turn(message: str, session_id: str, intent: str | None = None) -> dic
         database.log_turn(
             session_id, message, HUMAN_HANDOFF_MESSAGE,
             intent="human_agent", kb_hit=False, source=None,
-            escalated=True, sentiment=sentiment,
+            escalated=True, sentiment=sentiment, confidence=1.0, is_fallback=False,
         )
         return {
             "response": HUMAN_HANDOFF_MESSAGE,
@@ -88,6 +88,8 @@ def handle_turn(message: str, session_id: str, intent: str | None = None) -> dic
     kb_hit = bool(results)
     confidence = _confidence(results)
     label = _confidence_label(confidence)
+    # A fallback turn = the bot could not confidently answer from the KB.
+    is_fallback = (not kb_hit) or label == "low"
     answer = gemini.generate_answer(message, results)
     source = results[0]["doc"] if results else None
 
@@ -95,6 +97,7 @@ def handle_turn(message: str, session_id: str, intent: str | None = None) -> dic
         session_id, message, answer,
         intent=detected_intent, kb_hit=kb_hit, source=source,
         escalated=False, sentiment=sentiment,
+        confidence=confidence, is_fallback=is_fallback,
     )
 
     return {

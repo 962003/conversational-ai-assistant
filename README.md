@@ -36,14 +36,24 @@ User → Dialogflow CX (intent + entities) → Webhook (FastAPI)
 
 ## 🏗️ Architecture
 
-```
-USER ──▶ DIALOGFLOW CX ──▶ WEBHOOK (FastAPI) ──▶ KNOWLEDGE BASE ──▶ GEMINI ──▶ USER
-          intent/entities      orchestration         retrieval        grounded     │
-                                     │                                              │
-                                     └──────────────▶ ANALYTICS (SQLite) ◀──────────┘
+```mermaid
+flowchart LR
+    U([Customer]) --> CX[Dialogflow CX<br/>intent + entities]
+    CX -->|webhook| API[FastAPI]
+    API --> KB[(Knowledge Base)]
+    KB --> EMB[Vertex AI Embeddings]
+    EMB --> GEM[Gemini 2.5 Flash]
+    GEM -->|answer + sources + confidence| API
+    API --> CX --> U
+    API -.->|handoff| HO[Human Agent]
+    API -.->|log| AN[(Analytics)]
+    classDef g fill:#4285F4,stroke:#1a73e8,color:#fff;
+    class CX,EMB,GEM g;
 ```
 
-Full diagram in [`docs/architecture.md`](docs/architecture.md).
+More diagrams (sequence + deployment) in
+[`docs/architecture-diagram.md`](docs/architecture-diagram.md) · prose in
+[`docs/architecture.md`](docs/architecture.md).
 
 ## ✨ Features
 
