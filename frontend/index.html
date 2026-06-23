@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acme Support AI — Assistant</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◆</span>
+      <div>
+        <h1>Acme Support AI</h1>
+        <p>Dialogflow CX · Gemini · Knowledge Base</p>
+      </div>
+    </div>
+    <nav>
+      <a href="index.html" class="active">Chat</a>
+      <a href="dashboard.html">Analytics</a>
+    </nav>
+  </header>
+
+  <main class="chat-shell">
+    <section class="chat-panel">
+      <div class="mode-bar">
+        <span class="mode-label">Path:</span>
+        <div class="toggle" id="mode-toggle">
+          <button data-mode="direct" class="active">Direct (RAG)</button>
+          <button data-mode="cx">Dialogflow CX</button>
+        </div>
+        <span id="cx-state" class="cx-state"></span>
+      </div>
+      <div id="messages" class="messages"></div>
+
+      <div class="suggestions" id="suggestions">
+        <button>What is your refund policy?</button>
+        <button>How much does the Pro plan cost?</button>
+        <button>Where is my order 12345?</button>
+        <button>Tell me about Acme Voice Gateway</button>
+        <button>I want to talk to a human</button>
+      </div>
+
+      <form id="chat-form" class="composer">
+        <input id="input" type="text" placeholder="Ask about orders, refunds, pricing…" autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+    </section>
+
+    <aside class="side-panel">
+      <h3>Pipeline</h3>
+      <ol class="pipeline">
+        <li>Dialogflow CX — intent</li>
+        <li>Webhook — FastAPI</li>
+        <li>Knowledge Base — retrieve</li>
+        <li>Gemini — grounded answer</li>
+      </ol>
+      <h3>Last turn</h3>
+      <div id="meta" class="meta">Send a message to see intent, sources and sentiment.</div>
+    </aside>
+  </main>
+
+  <!-- Ticket modal -->
+  <div id="ticket-modal" class="modal hidden">
+    <div class="modal-card">
+      <h3>Create a support ticket</h3>
+      <input id="t-name" placeholder="Your name" />
+      <input id="t-email" type="email" placeholder="Email" />
+      <textarea id="t-issue" placeholder="Describe your issue"></textarea>
+      <div class="modal-actions">
+        <button id="t-cancel" class="secondary">Cancel</button>
+        <button id="t-submit">Submit ticket</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

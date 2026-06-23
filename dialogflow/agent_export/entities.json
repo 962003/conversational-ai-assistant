@@ -1,0 +1,29 @@
+{
+  "_comment": "Custom entity types. Create these under Manage > Entity Types in Dialogflow CX. order_number and email use regex; product_name uses a synonym map. person, date are system entities (@sys.person, @sys.date).",
+  "entityTypes": [
+    {
+      "displayName": "order_number",
+      "kind": "KIND_REGEXP",
+      "entities": [
+        { "value": "[0-9]{4,7}", "synonyms": ["[0-9]{4,7}"] }
+      ]
+    },
+    {
+      "displayName": "email",
+      "kind": "KIND_REGEXP",
+      "entities": [
+        { "value": "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "synonyms": ["[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"] }
+      ]
+    },
+    {
+      "displayName": "product_name",
+      "kind": "KIND_MAP",
+      "entities": [
+        { "value": "Acme Assistant Hub", "synonyms": ["assistant hub", "AAH-100", "hub", "assistant"] },
+        { "value": "Acme Voice Gateway", "synonyms": ["voice gateway", "AVG-200", "voice", "telephony"] },
+        { "value": "Acme Insights", "synonyms": ["insights", "AIN-300", "analytics product"] },
+        { "value": "Acme Connectors", "synonyms": ["connectors", "ACN-400", "integrations", "crm connector"] }
+      ]
+    }
+  ]
+}

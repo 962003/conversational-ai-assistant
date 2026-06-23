@@ -1,0 +1,90 @@
+{
+  "_comment": "Training phrases for the 6 core intents. In Dialogflow CX, create one Intent per object below and paste the trainingPhrases. Parameters reference the custom entities in entities.json.",
+  "intents": [
+    {
+      "displayName": "order_status",
+      "description": "User wants to know the status / location of an order",
+      "trainingPhrases": [
+        "Where is my order 12345?",
+        "Track my order",
+        "Has my package shipped yet?",
+        "What's the status of order 98765?",
+        "When will my order arrive?",
+        "My order hasn't arrived",
+        "Can you check delivery for order 55512?"
+      ],
+      "parameters": [
+        { "id": "order_id", "entityType": "@order_number", "required": false }
+      ]
+    },
+    {
+      "displayName": "refund_policy",
+      "description": "Questions about refunds and returns",
+      "trainingPhrases": [
+        "What is your refund policy?",
+        "How do I return an item?",
+        "Can I get my money back?",
+        "How long do refunds take?",
+        "I want a refund for my order",
+        "Are gift cards refundable?"
+      ],
+      "parameters": []
+    },
+    {
+      "displayName": "pricing",
+      "description": "Questions about plans, prices and billing",
+      "trainingPhrases": [
+        "How much does the Pro plan cost?",
+        "What are your prices?",
+        "Do you offer annual billing?",
+        "Is there a free trial?",
+        "What's included in the Business plan?",
+        "Do you have discounts for non-profits?"
+      ],
+      "parameters": []
+    },
+    {
+      "displayName": "product_information",
+      "description": "Questions about products and features",
+      "trainingPhrases": [
+        "Tell me about Acme Voice Gateway",
+        "What does Acme Insights do?",
+        "What products do you offer?",
+        "What is the SKU for the Assistant Hub?",
+        "Do you have CRM integrations?",
+        "What features are included?"
+      ],
+      "parameters": [
+        { "id": "product", "entityType": "@product_name", "required": false }
+      ]
+    },
+    {
+      "displayName": "human_agent",
+      "description": "User asks to speak to a human / escalate",
+      "trainingPhrases": [
+        "I want to talk to a human",
+        "Connect me to an agent",
+        "Can I speak to a representative?",
+        "This isn't helping, get me a person",
+        "Live agent please",
+        "I need to file a complaint with someone"
+      ],
+      "parameters": [
+        { "id": "person_name", "entityType": "@sys.person", "required": false },
+        { "id": "email", "entityType": "@email", "required": false }
+      ]
+    },
+    {
+      "displayName": "general_question",
+      "description": "Catch-all support question answered from the knowledge base",
+      "trainingPhrases": [
+        "How do I reset my password?",
+        "Is my data secure?",
+        "What are your support hours?",
+        "Can I use it in multiple languages?",
+        "How do I change my plan?"
+      ],
+      "parameters": []
+    }
+  ]
+}

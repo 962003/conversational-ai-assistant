@@ -1,0 +1,20 @@
+# Render.com blueprint — deploys the FastAPI backend.
+# 1. Push this repo to GitHub.
+# 2. In Render: New → Blueprint → select the repo.
+# 3. Set GEMINI_API_KEY in the dashboard (marked sync:false below).
+services:
+  - type: web
+    name: acme-support-ai-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: KNOWLEDGE_BASE_DIR
+        value: ../knowledge_base
+      - key: CORS_ORIGINS
+        value: "*"

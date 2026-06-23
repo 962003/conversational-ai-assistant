@@ -1,0 +1,40 @@
+name: Deploy to Cloud Run
+
+# Manual trigger (Actions tab → Run workflow) so it never fails on ordinary pushes.
+# Configure these repo secrets first:
+#   GCP_PROJECT_ID            - your Google Cloud project id
+#   GCP_REGION                - e.g. us-central1
+#   GCP_SA_KEY                - service-account JSON key (Cloud Run Admin + SA User)
+#   GEMINI_API_KEY            - optional; for AI-generated answers
+on:
+  workflow_dispatch:
+    inputs:
+      service_name:
+        description: Cloud Run service name
+        default: acme-support-ai
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy (builds ./Dockerfile)
+        run: |
+          gcloud run deploy "${{ github.event.inputs.service_name }}" \
+            --source . \
+            --region "${{ secrets.GCP_REGION }}" \
+            --allow-unauthenticated \
+            --set-env-vars GEMINI_MODEL=gemini-2.5-flash \
+            --set-env-vars GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"

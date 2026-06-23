@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acme Support AI — Analytics</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◆</span>
+      <div>
+        <h1>Acme Support AI</h1>
+        <p>Analytics Dashboard</p>
+      </div>
+    </div>
+    <nav>
+      <a href="index.html">Chat</a>
+      <a href="dashboard.html" class="active">Analytics</a>
+    </nav>
+  </header>
+
+  <main class="dash">
+    <button class="refresh" onclick="loadAnalytics()">↻ Refresh</button>
+    <div class="cards" id="cards"></div>
+    <div class="grid2">
+      <div class="block">
+        <h3>Top Questions / Intents</h3>
+        <div id="intents"></div>
+      </div>
+      <div class="block">
+        <h3>Recent Conversations</h3>
+        <div class="recent" id="recent"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
